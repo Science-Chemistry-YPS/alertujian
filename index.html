@@ -7,22 +7,23 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; /* Mencegah blok teks */ }
         iframe { width: 100%; height: calc(100vh - 50px); border: none; }
         
-        /* Animasi kedip untuk warning */
-        @keyframes pulse-red {
-            0% { background-color: rgba(220, 38, 38, 0.95); }
-            50% { background-color: rgba(153, 27, 27, 0.95); }
-            100% { background-color: rgba(220, 38, 38, 0.95); }
+        /* Animasi kedip untuk warning (TEMA BIRU) */
+        @keyframes pulse-blue {
+            0% { background-color: rgba(30, 58, 138, 0.95); } /* Blue 900 */
+            50% { background-color: rgba(29, 78, 216, 0.95); } /* Blue 700 */
+            100% { background-color: rgba(30, 58, 138, 0.95); }
         }
         
         .warning-overlay {
-            animation: pulse-red 2s infinite;
+            animation: pulse-blue 2s infinite;
         }
 
         .blocked-overlay {
-            background-color: #1a1a1a;
+            background-color: #0f172a; /* Slate 900 (Dark Blue-ish) */
+            cursor: not-allowed; /* Kursor dilarang */
         }
 
         /* Scrollbar untuk list mapel admin */
@@ -38,7 +39,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100" oncontextmenu="return false;">
 
     <!-- HALAMAN SETUP (Siswa Memilih Mapel) -->
     <div id="setup-screen" class="min-h-screen flex items-center justify-center bg-gray-900 text-white p-4">
@@ -56,6 +57,12 @@
             <p class="text-gray-400 text-center mb-6 text-sm">Sumatif Akhir Semester</p>
             
             <div class="space-y-4">
+                <!-- Input Identitas Siswa -->
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Nama Lengkap / NIS:</label>
+                    <input type="text" id="student-name" placeholder="Masukkan Nama Anda" class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 focus:outline-none text-white transition">
+                </div>
+
                 <div>
                     <label class="block text-sm font-medium mb-2 text-gray-300">Pilih Mata Pelajaran:</label>
                     <select id="subject-select" class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 focus:outline-none text-white transition appearance-none">
@@ -69,7 +76,8 @@
                     <ul class="list-disc list-inside text-xs text-gray-300 space-y-1">
                         <li>Dilarang pindah tab atau minimize browser.</li>
                         <li>Toleransi pelanggaran terbatas.</li>
-                        <li>Jika melanggar batas, Anda akan <strong>diskors selama 3 menit</strong> sebelum bisa melanjutkan.</li>
+                        <li>Jika melanggar batas, <strong>layar akan terkunci total selama 3 menit</strong>.</li>
+                        <li>Segala aktivitas perpindahan aplikasi akan <strong>tercatat di log guru</strong>.</li>
                     </ul>
                 </div>
 
@@ -89,7 +97,18 @@
             </div>
             
             <div class="p-4 overflow-y-auto custom-scroll flex-1">
-                <!-- Input Form -->
+                
+                <!-- Konfigurasi Logger -->
+                <div class="bg-gray-700/30 p-3 rounded mb-4 border border-gray-600">
+                    <h3 class="text-sm font-bold text-green-400 mb-2 flex items-center gap-2">
+                        <i data-lucide="sheet"></i> Integrasi Spreadsheet
+                    </h3>
+                    <p class="text-xs text-gray-400 mb-2">Masukkan URL Google Apps Script Web App untuk mencatat pelanggaran.</p>
+                    <input type="text" id="logger-url-input" placeholder="https://script.google.com/macros/s/..." class="w-full mb-2 p-2 rounded bg-gray-900 border border-gray-600 text-white text-xs">
+                    <button onclick="saveLoggerUrl()" class="w-full bg-gray-600 hover:bg-gray-500 text-white py-1 rounded text-xs">Simpan URL Logger</button>
+                </div>
+
+                <!-- Input Form Soal -->
                 <div class="bg-gray-700/50 p-3 rounded mb-4">
                     <h3 class="text-sm font-bold text-blue-400 mb-2">Tambah Soal Baru</h3>
                     <input type="text" id="new-subject-name" placeholder="Nama Mapel (Cth: Matematika)" class="w-full mb-2 p-2 rounded bg-gray-900 border border-gray-600 text-white text-sm">
@@ -118,7 +137,10 @@
         <div class="h-[50px] bg-gray-900 text-white flex items-center justify-between px-4 shadow-md z-10">
             <div class="flex items-center gap-2">
                 <i data-lucide="file-text" class="w-5 h-5 text-blue-400"></i>
-                <span class="font-semibold text-sm md:text-base" id="active-subject-name">Ujian Berlangsung</span>
+                <div class="flex flex-col leading-tight">
+                    <span class="font-semibold text-sm md:text-base" id="active-subject-name">Ujian Berlangsung</span>
+                    <span class="text-[10px] text-gray-400" id="active-student-name">Siswa</span>
+                </div>
             </div>
             <div class="flex items-center gap-4">
                 <div id="status-indicator" class="flex items-center gap-2 px-3 py-1 rounded bg-green-900/50 border border-green-700 text-green-400 text-xs md:text-sm transition-colors">
@@ -135,57 +157,72 @@
         </div>
     </div>
 
-    <!-- OVERLAY PERINGATAN (Muncul saat ganti tab) -->
+    <!-- OVERLAY PERINGATAN (Muncul saat ganti tab) - TEMA BIRU -->
     <div id="warning-overlay" class="hidden fixed inset-0 z-50 warning-overlay flex flex-col items-center justify-center text-white p-8 text-center">
-        <i data-lucide="alert-triangle" class="w-32 h-32 mb-6 text-yellow-300"></i>
-        <h1 class="text-4xl font-bold mb-4">PERINGATAN!</h1>
+        <i data-lucide="alert-circle" class="w-32 h-32 mb-6 text-blue-300"></i>
+        <h1 class="text-4xl font-bold mb-4">PERINGATAN AKTIVITAS!</h1>
         <p class="text-xl mb-4 max-w-2xl">
-            Kembali ke ujian segera! <br>
-            Jika toleransi habis, Anda akan diskors selama 3 menit.
+            Sistem mendeteksi Anda meninggalkan halaman ujian.<br>
+            Aktivitas ini dilaporkan sebagai tindakan multitasking/membuka aplikasi lain.
         </p>
         <div class="text-4xl font-mono font-bold" id="overlay-tolerance-timer">
             60
         </div>
+        <p class="mt-4 text-sm text-blue-200">Kembali segera sebelum akses dikunci!</p>
     </div>
 
-    <!-- OVERLAY SUSPENSI (Hukuman 3 Menit) -->
+    <!-- OVERLAY SUSPENSI (Hukuman 3 Menit) - TEMA BIRU -->
     <div id="suspension-overlay" class="hidden fixed inset-0 z-[60] blocked-overlay flex flex-col items-center justify-center text-white p-8 text-center">
-        <i data-lucide="clock" class="w-24 h-24 mb-6 text-orange-500"></i>
-        <h1 class="text-3xl font-bold mb-2 text-orange-500">AKSES DITANGGUHKAN</h1>
+        <i data-lucide="lock" class="w-24 h-24 mb-6 text-blue-500"></i>
+        <h1 class="text-3xl font-bold mb-2 text-blue-500">PERANGKAT TERKUNCI</h1>
         <p class="text-lg text-gray-300 mb-6 max-w-xl">
-            Anda terlalu lama meninggalkan aplikasi ujian. <br>
-            Sebagai sanksi, Anda harus menunggu sebelum dapat melanjutkan.
+            Akses Anda dimatikan sementara karena pelanggaran disiplin.<br>
+            Keyboard dan kontrol browser dinonaktifkan.
         </p>
         
-        <div class="bg-gray-800 p-8 rounded-full border-4 border-orange-500 w-48 h-48 flex items-center justify-center mb-8 relative">
+        <div class="bg-gray-800 p-8 rounded-full border-4 border-blue-600 w-48 h-48 flex items-center justify-center mb-8 relative">
             <div class="text-4xl font-mono font-bold text-white" id="suspension-timer">03:00</div>
             <span class="absolute -bottom-8 text-sm text-gray-400">Waktu Tunggu</span>
         </div>
 
-        <button id="btn-resume-exam" onclick="resumeExam()" disabled class="px-8 py-3 bg-gray-600 text-gray-400 font-bold rounded cursor-not-allowed transition hover:bg-green-600 hover:text-white">
+        <button id="btn-resume-exam" onclick="resumeExam()" disabled class="px-8 py-3 bg-gray-600 text-gray-400 font-bold rounded cursor-not-allowed transition hover:bg-blue-600 hover:text-white">
             LANJUTKAN UJIAN
         </button>
-        <p id="resume-hint" class="mt-2 text-xs text-gray-500">Tombol akan aktif setelah waktu habis.</p>
+        <p id="resume-hint" class="mt-2 text-xs text-gray-500">Menunggu pembukaan kunci otomatis...</p>
     </div>
 
     <script>
         lucide.createIcons();
 
         // --- KONFIGURASI ADMIN ---
-        // Password sederhana untuk admin
-        const ADMIN_PASSWORD = "admin"; 
-        // Toleransi sebelum kena hukuman (dalam detik) - misal 10 detik akumulasi keluar tab
+        const ADMIN_PASSWORD = "cHemistry"; 
         const MAX_TOLERANCE = 10; 
-        // Lama hukuman menunggu (dalam detik) - 3 menit = 180
-        const SUSPENSION_TIME = 180; 
+        const SUSPENSION_TIME = 180; // 3 Menit
 
         // --- STATE VARIABLES ---
         let currentTolerance = MAX_TOLERANCE;
-        let subjects = JSON.parse(localStorage.getItem('examSubjects')) || [];
+        
+        // --- INISIALISASI SOAL DENGAN IPA DEFAULT ---
+        const defaultSubject = {
+            id: "ipa-default-001",
+            name: "Ilmu Pengetahuan Alam (IPA)",
+            url: "https://docs.google.com/forms/d/e/1FAIpQLSd7GJN7nCVAMhPq1dcW9A6RgWtpIRy7SoekaKuV2vIiq5u0XA/viewform?usp=dialog"
+        };
+
+        let storedSubjects = JSON.parse(localStorage.getItem('examSubjects')) || [];
+        const isIpaExist = storedSubjects.some(s => s.url === defaultSubject.url);
+        if (!isIpaExist) {
+            storedSubjects.unshift(defaultSubject);
+            localStorage.setItem('examSubjects', JSON.stringify(storedSubjects));
+        }
+        
+        let subjects = storedSubjects;
+        let loggerUrl = localStorage.getItem('loggerUrl') || ""; 
         let isExamActive = false;
         let isSuspended = false;
         let toleranceInterval = null;
         let suspensionInterval = null;
+        let currentStudentName = "";
 
         // --- DOM ELEMENTS ---
         const els = {
@@ -193,6 +230,8 @@
             examInterface: document.getElementById('exam-interface'),
             adminModal: document.getElementById('admin-modal'),
             subjectSelect: document.getElementById('subject-select'),
+            studentName: document.getElementById('student-name'),
+            loggerInput: document.getElementById('logger-url-input'),
             subjectList: document.getElementById('admin-subject-list'),
             inputs: {
                 name: document.getElementById('new-subject-name'),
@@ -205,7 +244,8 @@
                 tolerance: document.getElementById('tolerance-display'),
                 overlayTolerance: document.getElementById('overlay-tolerance-timer'),
                 suspension: document.getElementById('suspension-timer'),
-                subjectName: document.getElementById('active-subject-name')
+                subjectName: document.getElementById('active-subject-name'),
+                studentNameDisplay: document.getElementById('active-student-name')
             },
             btnResume: document.getElementById('btn-resume-exam'),
             resumeHint: document.getElementById('resume-hint')
@@ -215,8 +255,43 @@
         function init() {
             renderSubjectOptions();
             renderAdminList();
+            els.loggerInput.value = loggerUrl; 
         }
         init();
+
+        // --- SECURITY: KEYBOARD BLOCKER ---
+        // Memblokir tombol keyboard saat suspensi
+        document.addEventListener('keydown', function(e) {
+            if (isSuspended) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            
+            // Opsional: Memblokir inspect element / save page
+            if ((e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 's') || e.key === 'F12') {
+                e.preventDefault();
+            }
+        }, true);
+
+        // --- LOGGER FUNCTION ---
+        function logActivity(action, details) {
+            if (!loggerUrl) return; 
+
+            const payload = {
+                name: currentStudentName,
+                subject: els.displays.subjectName.textContent,
+                action: action,
+                details: details
+            };
+
+            fetch(loggerUrl, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).catch(err => console.error("Gagal log ke server", err));
+        }
 
         // --- ADMIN FUNCTIONS ---
         function openAdminPanel() {
@@ -230,6 +305,13 @@
 
         function closeAdminPanel() {
             els.adminModal.classList.add('hidden');
+        }
+
+        function saveLoggerUrl() {
+            const url = els.loggerInput.value.trim();
+            localStorage.setItem('loggerUrl', url);
+            loggerUrl = url;
+            alert("URL Logger tersimpan!");
         }
 
         function addSubject() {
@@ -298,11 +380,17 @@
         function startExam() {
             const url = els.subjectSelect.value;
             const name = els.subjectSelect.options[els.subjectSelect.selectedIndex]?.text;
-            
+            const student = els.studentName.value.trim();
+
+            if (!student) return alert("Harap isi Nama Lengkap / NIS Anda!");
             if (!url) return alert("Silakan pilih mata pelajaran terlebih dahulu!");
 
+            currentStudentName = student;
+            
             els.frame.src = url;
             els.displays.subjectName.textContent = name;
+            els.displays.studentNameDisplay.textContent = student;
+            
             els.setupScreen.classList.add('hidden');
             els.examInterface.classList.remove('hidden');
             
@@ -310,21 +398,32 @@
             currentTolerance = MAX_TOLERANCE;
             updateToleranceDisplay();
             
-            document.documentElement.requestFullscreen().catch(e => console.log("Fullscreen blocked"));
+            logActivity("START", "Memulai ujian"); 
+
+            enterFullscreen();
+        }
+
+        function enterFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(() => {});
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            }
         }
 
         // --- DETECTION & PENALTY SYSTEM ---
         
-        // 1. Deteksi keluar tab
         document.addEventListener("visibilitychange", () => {
             if (!isExamActive || isSuspended) return;
 
             if (document.hidden) {
                 // User keluar
                 els.warning.classList.remove('hidden');
-                document.title = "⚠️ PELANGGARAN!";
+                document.title = "⚠️ KEMBALI!";
                 
-                // Mulai kurangi toleransi
+                logActivity("WARNING", "Keluar tab / minimize"); 
+
                 if (!toleranceInterval) {
                     toleranceInterval = setInterval(() => {
                         currentTolerance--;
@@ -333,15 +432,18 @@
                         if (currentTolerance <= 0) {
                             triggerSuspension();
                         }
-                    }, 1000); // Hitung mundur toleransi per detik
+                    }, 1000); 
                 }
 
             } else {
-                // User kembali (jika belum tersuspend)
+                // User kembali
                 els.warning.classList.add('hidden');
                 document.title = "Portal Ujian Aman";
                 clearInterval(toleranceInterval);
                 toleranceInterval = null;
+                
+                // Pastikan kembali fullscreen
+                enterFullscreen();
             }
         });
 
@@ -350,24 +452,25 @@
             els.displays.overlayTolerance.textContent = currentTolerance;
         }
 
-        // 2. Trigger Hukuman (Suspensi)
         function triggerSuspension() {
             isSuspended = true;
             clearInterval(toleranceInterval);
             toleranceInterval = null;
             
-            // Tampilkan Overlay Hukuman
+            logActivity("SUSPEND", "Terkena hukuman suspensi 3 menit"); 
+
             els.warning.classList.add('hidden');
             els.suspension.classList.remove('hidden');
-            els.frame.style.pointerEvents = 'none'; // Matikan klik pada soal
+            els.frame.style.pointerEvents = 'none'; 
             
-            // Reset tombol resume
             els.btnResume.disabled = true;
-            els.btnResume.classList.remove('bg-green-600', 'text-white', 'cursor-pointer');
+            els.btnResume.classList.remove('bg-blue-600', 'text-white', 'cursor-pointer');
             els.btnResume.classList.add('bg-gray-600', 'text-gray-400', 'cursor-not-allowed');
             els.resumeHint.textContent = "Tombol akan aktif setelah waktu habis.";
             
-            // Mulai Timer Hukuman 3 Menit
+            // Paksa fullscreen ulang saat suspensi dimulai
+            enterFullscreen();
+
             let penaltyTime = SUSPENSION_TIME;
             updateSuspensionDisplay(penaltyTime);
             
@@ -375,6 +478,12 @@
                 penaltyTime--;
                 updateSuspensionDisplay(penaltyTime);
                 
+                // Cek terus apakah user keluar fullscreen, jika ya paksa lagi (walau browser membatasi ini)
+                if (!document.fullscreenElement) {
+                    // Kita tidak bisa auto-request fullscreen tanpa user interaction,
+                    // tapi kita bisa pastikan UI tetap tertutup overlay
+                }
+
                 if (penaltyTime <= 0) {
                     clearInterval(suspensionInterval);
                     enableResume();
@@ -391,31 +500,24 @@
         function enableResume() {
             els.btnResume.disabled = false;
             els.btnResume.classList.remove('bg-gray-600', 'text-gray-400', 'cursor-not-allowed');
-            els.btnResume.classList.add('bg-green-600', 'text-white', 'cursor-pointer');
+            els.btnResume.classList.add('bg-blue-600', 'text-white', 'cursor-pointer');
             els.btnResume.textContent = "LANJUTKAN UJIAN SEKARANG";
             els.resumeHint.textContent = "Waktu hukuman selesai. Silakan lanjut.";
-            
-            // Notifikasi suara kecil (opsional)
-            // const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
-            // audio.play().catch(e=>{});
         }
 
         function resumeExam() {
             isSuspended = false;
             els.suspension.classList.add('hidden');
-            els.frame.style.pointerEvents = 'auto'; // Hidupkan kembali klik
+            els.frame.style.pointerEvents = 'auto'; 
             
-            // Reset Toleransi (Berikan kesempatan kedua)
-            // Anda bisa mengubah ini: apakah reset full (MAX_TOLERANCE) atau sebagian.
+            logActivity("RESUME", "Melanjutkan ujian setelah suspensi"); 
+
             currentTolerance = MAX_TOLERANCE; 
             updateToleranceDisplay();
             
             document.title = "Portal Ujian Aman";
-            document.documentElement.requestFullscreen().catch(e=>{});
+            enterFullscreen();
         }
-
-        // Cegah Klik Kanan
-        document.addEventListener('contextmenu', event => event.preventDefault());
 
     </script>
 </body>
