@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Ujian Aman - Sumatif Akhir Semester</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        iframe { width: 100%; height: calc(100vh - 50px); border: none; }
+        
+        /* Animasi kedip untuk warning */
+        @keyframes pulse-red {
+            0% { background-color: rgba(220, 38, 38, 0.95); }
+            50% { background-color: rgba(153, 27, 27, 0.95); }
+            100% { background-color: rgba(220, 38, 38, 0.95); }
+        }
+        
+        .warning-overlay {
+            animation: pulse-red 2s infinite;
+        }
+
+        .blocked-overlay {
+            background-color: #1a1a1a;
+        }
+
+        /* Scrollbar untuk list mapel admin */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #2d3748; 
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #4a5568; 
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- HALAMAN SETUP (Siswa Memilih Mapel) -->
+    <div id="setup-screen" class="min-h-screen flex items-center justify-center bg-gray-900 text-white p-4">
+        <div class="max-w-md w-full bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700 relative">
+            
+            <!-- Tombol Admin Tersembunyi -->
+            <button onclick="openAdminPanel()" class="absolute top-4 right-4 text-gray-600 hover:text-white transition" title="Pengaturan Guru">
+                <i data-lucide="settings" class="w-5 h-5"></i>
+            </button>
+
+            <div class="flex justify-center mb-6">
+                <i data-lucide="shield-check" class="w-16 h-16 text-blue-500"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-center mb-2">Portal Ujian Aman</h1>
+            <p class="text-gray-400 text-center mb-6 text-sm">Sumatif Akhir Semester</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-gray-300">Pilih Mata Pelajaran:</label>
+                    <select id="subject-select" class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 focus:outline-none text-white transition appearance-none">
+                        <option value="" disabled selected>-- Pilih Soal Ujian --</option>
+                        <!-- Opsi akan diisi via JS -->
+                    </select>
+                </div>
+                
+                <div class="bg-blue-900/30 p-4 rounded border border-blue-800">
+                    <h3 class="font-bold text-blue-400 text-sm mb-2"><i data-lucide="info" class="inline w-4 h-4 mr-1"></i> Aturan Sistem:</h3>
+                    <ul class="list-disc list-inside text-xs text-gray-300 space-y-1">
+                        <li>Dilarang pindah tab atau minimize browser.</li>
+                        <li>Toleransi pelanggaran terbatas.</li>
+                        <li>Jika melanggar batas, Anda akan <strong>diskors selama 3 menit</strong> sebelum bisa melanjutkan.</li>
+                    </ul>
+                </div>
+
+                <button onclick="startExam()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded transition flex items-center justify-center gap-2">
+                    <i data-lucide="play"></i> Mulai Ujian
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ADMIN (Password Protected) -->
+    <div id="admin-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+        <div class="bg-gray-800 w-full max-w-lg rounded-lg shadow-xl border border-gray-600 flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-white">Pengaturan Soal (Admin)</h2>
+                <button onclick="closeAdminPanel()" class="text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
+            </div>
+            
+            <div class="p-4 overflow-y-auto custom-scroll flex-1">
+                <!-- Input Form -->
+                <div class="bg-gray-700/50 p-3 rounded mb-4">
+                    <h3 class="text-sm font-bold text-blue-400 mb-2">Tambah Soal Baru</h3>
+                    <input type="text" id="new-subject-name" placeholder="Nama Mapel (Cth: Matematika)" class="w-full mb-2 p-2 rounded bg-gray-900 border border-gray-600 text-white text-sm">
+                    <input type="text" id="new-subject-url" placeholder="Link Google Form/CBT" class="w-full mb-2 p-2 rounded bg-gray-900 border border-gray-600 text-white text-sm">
+                    <button onclick="addSubject()" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded text-sm font-bold">
+                        + Tambah ke Daftar
+                    </button>
+                </div>
+
+                <!-- List Mapel -->
+                <h3 class="text-sm font-bold text-gray-300 mb-2">Daftar Soal Tersimpan:</h3>
+                <ul id="admin-subject-list" class="space-y-2">
+                    <!-- List items via JS -->
+                </ul>
+            </div>
+            
+            <div class="p-4 border-t border-gray-700 text-right">
+                <button onclick="closeAdminPanel()" class="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded text-sm">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HALAMAN UJIAN UTAMA -->
+    <div id="exam-interface" class="hidden h-screen flex flex-col">
+        <!-- Header Status -->
+        <div class="h-[50px] bg-gray-900 text-white flex items-center justify-between px-4 shadow-md z-10">
+            <div class="flex items-center gap-2">
+                <i data-lucide="file-text" class="w-5 h-5 text-blue-400"></i>
+                <span class="font-semibold text-sm md:text-base" id="active-subject-name">Ujian Berlangsung</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <div id="status-indicator" class="flex items-center gap-2 px-3 py-1 rounded bg-green-900/50 border border-green-700 text-green-400 text-xs md:text-sm transition-colors">
+                    <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    Status: Aman
+                </div>
+                <div class="font-mono text-sm" id="tolerance-display">Sisa Toleransi: 60dtk</div>
+            </div>
+        </div>
+
+        <!-- Container Soal -->
+        <div class="flex-1 relative bg-white">
+            <iframe id="exam-frame" src="" allow="camera; microphone; fullscreen"></iframe>
+        </div>
+    </div>
+
+    <!-- OVERLAY PERINGATAN (Muncul saat ganti tab) -->
+    <div id="warning-overlay" class="hidden fixed inset-0 z-50 warning-overlay flex flex-col items-center justify-center text-white p-8 text-center">
+        <i data-lucide="alert-triangle" class="w-32 h-32 mb-6 text-yellow-300"></i>
+        <h1 class="text-4xl font-bold mb-4">PERINGATAN!</h1>
+        <p class="text-xl mb-4 max-w-2xl">
+            Kembali ke ujian segera! <br>
+            Jika toleransi habis, Anda akan diskors selama 3 menit.
+        </p>
+        <div class="text-4xl font-mono font-bold" id="overlay-tolerance-timer">
+            60
+        </div>
+    </div>
+
+    <!-- OVERLAY SUSPENSI (Hukuman 3 Menit) -->
+    <div id="suspension-overlay" class="hidden fixed inset-0 z-[60] blocked-overlay flex flex-col items-center justify-center text-white p-8 text-center">
+        <i data-lucide="clock" class="w-24 h-24 mb-6 text-orange-500"></i>
+        <h1 class="text-3xl font-bold mb-2 text-orange-500">AKSES DITANGGUHKAN</h1>
+        <p class="text-lg text-gray-300 mb-6 max-w-xl">
+            Anda terlalu lama meninggalkan aplikasi ujian. <br>
+            Sebagai sanksi, Anda harus menunggu sebelum dapat melanjutkan.
+        </p>
+        
+        <div class="bg-gray-800 p-8 rounded-full border-4 border-orange-500 w-48 h-48 flex items-center justify-center mb-8 relative">
+            <div class="text-4xl font-mono font-bold text-white" id="suspension-timer">03:00</div>
+            <span class="absolute -bottom-8 text-sm text-gray-400">Waktu Tunggu</span>
+        </div>
+
+        <button id="btn-resume-exam" onclick="resumeExam()" disabled class="px-8 py-3 bg-gray-600 text-gray-400 font-bold rounded cursor-not-allowed transition hover:bg-green-600 hover:text-white">
+            LANJUTKAN UJIAN
+        </button>
+        <p id="resume-hint" class="mt-2 text-xs text-gray-500">Tombol akan aktif setelah waktu habis.</p>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // --- KONFIGURASI ADMIN ---
+        // Password sederhana untuk admin
+        const ADMIN_PASSWORD = "admin"; 
+        // Toleransi sebelum kena hukuman (dalam detik) - misal 10 detik akumulasi keluar tab
+        const MAX_TOLERANCE = 10; 
+        // Lama hukuman menunggu (dalam detik) - 3 menit = 180
+        const SUSPENSION_TIME = 180; 
+
+        // --- STATE VARIABLES ---
+        let currentTolerance = MAX_TOLERANCE;
+        let subjects = JSON.parse(localStorage.getItem('examSubjects')) || [];
+        let isExamActive = false;
+        let isSuspended = false;
+        let toleranceInterval = null;
+        let suspensionInterval = null;
+
+        // --- DOM ELEMENTS ---
+        const els = {
+            setupScreen: document.getElementById('setup-screen'),
+            examInterface: document.getElementById('exam-interface'),
+            adminModal: document.getElementById('admin-modal'),
+            subjectSelect: document.getElementById('subject-select'),
+            subjectList: document.getElementById('admin-subject-list'),
+            inputs: {
+                name: document.getElementById('new-subject-name'),
+                url: document.getElementById('new-subject-url')
+            },
+            frame: document.getElementById('exam-frame'),
+            warning: document.getElementById('warning-overlay'),
+            suspension: document.getElementById('suspension-overlay'),
+            displays: {
+                tolerance: document.getElementById('tolerance-display'),
+                overlayTolerance: document.getElementById('overlay-tolerance-timer'),
+                suspension: document.getElementById('suspension-timer'),
+                subjectName: document.getElementById('active-subject-name')
+            },
+            btnResume: document.getElementById('btn-resume-exam'),
+            resumeHint: document.getElementById('resume-hint')
+        };
+
+        // --- INITIALIZATION ---
+        function init() {
+            renderSubjectOptions();
+            renderAdminList();
+        }
+        init();
+
+        // --- ADMIN FUNCTIONS ---
+        function openAdminPanel() {
+            const pass = prompt("Masukkan Password Admin:");
+            if (pass === ADMIN_PASSWORD) {
+                els.adminModal.classList.remove('hidden');
+            } else if (pass !== null) {
+                alert("Password Salah!");
+            }
+        }
+
+        function closeAdminPanel() {
+            els.adminModal.classList.add('hidden');
+        }
+
+        function addSubject() {
+            const name = els.inputs.name.value.trim();
+            const url = els.inputs.url.value.trim();
+
+            if (!name || !url) return alert("Nama dan URL harus diisi!");
+            
+            subjects.push({ id: Date.now(), name, url });
+            saveSubjects();
+            
+            els.inputs.name.value = "";
+            els.inputs.url.value = "";
+            
+            renderSubjectOptions();
+            renderAdminList();
+        }
+
+        function deleteSubject(id) {
+            if(confirm("Hapus soal ini?")) {
+                subjects = subjects.filter(s => s.id !== id);
+                saveSubjects();
+                renderSubjectOptions();
+                renderAdminList();
+            }
+        }
+
+        function saveSubjects() {
+            localStorage.setItem('examSubjects', JSON.stringify(subjects));
+        }
+
+        function renderSubjectOptions() {
+            els.subjectSelect.innerHTML = '<option value="" disabled selected>-- Pilih Soal Ujian --</option>';
+            subjects.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.url;
+                opt.textContent = s.name;
+                els.subjectSelect.appendChild(opt);
+            });
+        }
+
+        function renderAdminList() {
+            els.subjectList.innerHTML = '';
+            if (subjects.length === 0) {
+                els.subjectList.innerHTML = '<li class="text-gray-500 text-xs italic">Belum ada soal.</li>';
+                return;
+            }
+            subjects.forEach(s => {
+                const li = document.createElement('li');
+                li.className = "flex justify-between items-center bg-gray-900 p-2 rounded border border-gray-700";
+                li.innerHTML = `
+                    <div class="overflow-hidden">
+                        <div class="font-bold text-white text-sm">${s.name}</div>
+                        <div class="text-xs text-gray-500 truncate w-48">${s.url}</div>
+                    </div>
+                    <button onclick="deleteSubject(${s.id})" class="text-red-400 hover:text-red-300 p-1">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                `;
+                els.subjectList.appendChild(li);
+            });
+            lucide.createIcons();
+        }
+
+        // --- EXAM LOGIC ---
+        function startExam() {
+            const url = els.subjectSelect.value;
+            const name = els.subjectSelect.options[els.subjectSelect.selectedIndex]?.text;
+            
+            if (!url) return alert("Silakan pilih mata pelajaran terlebih dahulu!");
+
+            els.frame.src = url;
+            els.displays.subjectName.textContent = name;
+            els.setupScreen.classList.add('hidden');
+            els.examInterface.classList.remove('hidden');
+            
+            isExamActive = true;
+            currentTolerance = MAX_TOLERANCE;
+            updateToleranceDisplay();
+            
+            document.documentElement.requestFullscreen().catch(e => console.log("Fullscreen blocked"));
+        }
+
+        // --- DETECTION & PENALTY SYSTEM ---
+        
+        // 1. Deteksi keluar tab
+        document.addEventListener("visibilitychange", () => {
+            if (!isExamActive || isSuspended) return;
+
+            if (document.hidden) {
+                // User keluar
+                els.warning.classList.remove('hidden');
+                document.title = "⚠️ PELANGGARAN!";
+                
+                // Mulai kurangi toleransi
+                if (!toleranceInterval) {
+                    toleranceInterval = setInterval(() => {
+                        currentTolerance--;
+                        updateToleranceDisplay();
+                        
+                        if (currentTolerance <= 0) {
+                            triggerSuspension();
+                        }
+                    }, 1000); // Hitung mundur toleransi per detik
+                }
+
+            } else {
+                // User kembali (jika belum tersuspend)
+                els.warning.classList.add('hidden');
+                document.title = "Portal Ujian Aman";
+                clearInterval(toleranceInterval);
+                toleranceInterval = null;
+            }
+        });
+
+        function updateToleranceDisplay() {
+            els.displays.tolerance.textContent = `Sisa Toleransi: ${currentTolerance}dtk`;
+            els.displays.overlayTolerance.textContent = currentTolerance;
+        }
+
+        // 2. Trigger Hukuman (Suspensi)
+        function triggerSuspension() {
+            isSuspended = true;
+            clearInterval(toleranceInterval);
+            toleranceInterval = null;
+            
+            // Tampilkan Overlay Hukuman
+            els.warning.classList.add('hidden');
+            els.suspension.classList.remove('hidden');
+            els.frame.style.pointerEvents = 'none'; // Matikan klik pada soal
+            
+            // Reset tombol resume
+            els.btnResume.disabled = true;
+            els.btnResume.classList.remove('bg-green-600', 'text-white', 'cursor-pointer');
+            els.btnResume.classList.add('bg-gray-600', 'text-gray-400', 'cursor-not-allowed');
+            els.resumeHint.textContent = "Tombol akan aktif setelah waktu habis.";
+            
+            // Mulai Timer Hukuman 3 Menit
+            let penaltyTime = SUSPENSION_TIME;
+            updateSuspensionDisplay(penaltyTime);
+            
+            suspensionInterval = setInterval(() => {
+                penaltyTime--;
+                updateSuspensionDisplay(penaltyTime);
+                
+                if (penaltyTime <= 0) {
+                    clearInterval(suspensionInterval);
+                    enableResume();
+                }
+            }, 1000);
+        }
+
+        function updateSuspensionDisplay(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            els.displays.suspension.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
+        function enableResume() {
+            els.btnResume.disabled = false;
+            els.btnResume.classList.remove('bg-gray-600', 'text-gray-400', 'cursor-not-allowed');
+            els.btnResume.classList.add('bg-green-600', 'text-white', 'cursor-pointer');
+            els.btnResume.textContent = "LANJUTKAN UJIAN SEKARANG";
+            els.resumeHint.textContent = "Waktu hukuman selesai. Silakan lanjut.";
+            
+            // Notifikasi suara kecil (opsional)
+            // const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+            // audio.play().catch(e=>{});
+        }
+
+        function resumeExam() {
+            isSuspended = false;
+            els.suspension.classList.add('hidden');
+            els.frame.style.pointerEvents = 'auto'; // Hidupkan kembali klik
+            
+            // Reset Toleransi (Berikan kesempatan kedua)
+            // Anda bisa mengubah ini: apakah reset full (MAX_TOLERANCE) atau sebagian.
+            currentTolerance = MAX_TOLERANCE; 
+            updateToleranceDisplay();
+            
+            document.title = "Portal Ujian Aman";
+            document.documentElement.requestFullscreen().catch(e=>{});
+        }
+
+        // Cegah Klik Kanan
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+    </script>
+</body>
+</html>
