@@ -3,27 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Ujian Aman - Sumatif Akhir Semester</title>
+    <title>Portal Ujian SMP YPS Singkole</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; /* Mencegah blok teks */ }
         iframe { width: 100%; height: calc(100vh - 50px); border: none; }
         
-        /* Animasi kedip untuk warning (TEMA BIRU) */
-        @keyframes pulse-blue {
-            0% { background-color: rgba(30, 58, 138, 0.95); } /* Blue 900 */
-            50% { background-color: rgba(29, 78, 216, 0.95); } /* Blue 700 */
-            100% { background-color: rgba(30, 58, 138, 0.95); }
+        /* Animasi kedip untuk warning (MERAH UNTUK ALERT) */
+        @keyframes pulse-red {
+            0% { background-color: rgba(220, 38, 38, 0.95); } /* Red 600 */
+            50% { background-color: rgba(153, 27, 27, 0.95); } /* Red 800 */
+            100% { background-color: rgba(220, 38, 38, 0.95); }
         }
         
         .warning-overlay {
-            animation: pulse-blue 2s infinite;
+            animation: pulse-red 2s infinite;
         }
 
         .blocked-overlay {
-            background-color: #0f172a; /* Slate 900 (Dark Blue-ish) */
-            cursor: not-allowed; /* Kursor dilarang */
+            background-color: #1a1a1a; /* Hampir Hitam */
+            cursor: not-allowed;
         }
 
         /* Scrollbar untuk list mapel admin */
@@ -42,47 +42,53 @@
 <body class="bg-gray-100" oncontextmenu="return false;">
 
     <!-- HALAMAN SETUP (Siswa Memilih Mapel) -->
-    <div id="setup-screen" class="min-h-screen flex items-center justify-center bg-gray-900 text-white p-4">
-        <div class="max-w-md w-full bg-gray-800 p-8 rounded-xl shadow-2xl border border-gray-700 relative">
+    <!-- TEMA: Background Abu-abu terang, Card Putih, Aksen Hijau & Kuning -->
+    <div id="setup-screen" class="min-h-screen flex items-center justify-center bg-gray-100 text-gray-800 p-4">
+        <div class="max-w-md w-full bg-white p-8 rounded-xl shadow-xl border border-gray-200 relative">
             
-            <!-- Tombol Admin Tersembunyi -->
-            <button onclick="openAdminPanel()" class="absolute top-4 right-4 text-gray-600 hover:text-white transition" title="Pengaturan Guru">
+            <!-- Tombol Admin Tersembunyi (Abu-abu) -->
+            <button onclick="openAdminPanel()" class="absolute top-4 right-4 text-gray-300 hover:text-green-600 transition" title="Pengaturan Guru">
                 <i data-lucide="settings" class="w-5 h-5"></i>
             </button>
 
             <div class="flex justify-center mb-6">
-                <i data-lucide="shield-check" class="w-16 h-16 text-blue-500"></i>
+                <!-- Logo Shield Hijau -->
+                <i data-lucide="shield-check" class="w-16 h-16 text-green-600"></i>
             </div>
-            <h1 class="text-2xl font-bold text-center mb-2">Portal Ujian Aman</h1>
-            <p class="text-gray-400 text-center mb-6 text-sm">Sumatif Akhir Semester</p>
+            <h1 class="text-2xl font-bold text-center mb-2 text-gray-800">Portal Ujian SMP YPS Singkole</h1>
+            <p class="text-gray-500 text-center mb-6 text-sm">Sumatif Akhir Semester</p>
             
             <div class="space-y-4">
-                <!-- Input Identitas Siswa -->
+                <!-- Input Identitas Siswa (Putih/Abu) -->
                 <div>
-                    <label class="block text-sm font-medium mb-2 text-gray-300">Nama Lengkap / NIS:</label>
-                    <input type="text" id="student-name" placeholder="Masukkan Nama Anda" class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 focus:outline-none text-white transition">
+                    <label class="block text-sm font-bold mb-2 text-gray-600">Nama Lengkap / NIS:</label>
+                    <input type="text" id="student-name" placeholder="Masukkan Nama Anda" class="w-full p-3 rounded bg-gray-50 border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:outline-none text-gray-900 transition shadow-sm">
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium mb-2 text-gray-300">Pilih Mata Pelajaran:</label>
-                    <select id="subject-select" class="w-full p-3 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 focus:outline-none text-white transition appearance-none">
+                    <label class="block text-sm font-bold mb-2 text-gray-600">Pilih Mata Pelajaran:</label>
+                    <select id="subject-select" class="w-full p-3 rounded bg-gray-50 border border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-500 focus:outline-none text-gray-900 transition appearance-none shadow-sm">
                         <option value="" disabled selected>-- Pilih Soal Ujian --</option>
                         <!-- Opsi akan diisi via JS -->
                     </select>
                 </div>
                 
-                <div class="bg-blue-900/30 p-4 rounded border border-blue-800">
-                    <h3 class="font-bold text-blue-400 text-sm mb-2"><i data-lucide="info" class="inline w-4 h-4 mr-1"></i> Aturan Sistem:</h3>
-                    <ul class="list-disc list-inside text-xs text-gray-300 space-y-1">
-                        <li>Dilarang pindah tab atau minimize browser.</li>
-                        <li>Toleransi pelanggaran terbatas.</li>
-                        <li>Jika melanggar batas, <strong>layar akan terkunci total selama 3 menit</strong>.</li>
-                        <li>Segala aktivitas perpindahan aplikasi akan <strong>tercatat di log guru</strong>.</li>
+                <!-- Info Box (Kuning) -->
+                <div class="bg-yellow-50 p-4 rounded-lg border border-yellow-400 shadow-sm">
+                    <h3 class="font-bold text-yellow-700 text-sm mb-2 flex items-center gap-2">
+                        <i data-lucide="alert-triangle" class="w-4 h-4"></i> Peraturan Ujian:
+                    </h3>
+                    <ul class="list-disc list-inside text-xs text-gray-700 space-y-1 ml-1">
+                        <li>Dilarang keluar aplikasi / pindah tab.</li>
+                        <li>Layar akan menjadi <strong class="text-red-600">MERAH</strong> jika melanggar.</li>
+                        <li>Sistem mencatat <strong>jumlah pelanggaran</strong>.</li>
+                        <li>Jika batas habis, perangkat terkunci 3 menit.</li>
                     </ul>
                 </div>
 
-                <button onclick="startExam()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded transition flex items-center justify-center gap-2">
-                    <i data-lucide="play"></i> Mulai Ujian
+                <!-- Tombol Mulai (Hijau) -->
+                <button onclick="startExam()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 transform active:scale-95">
+                    <i data-lucide="play-circle"></i> Mulai Ujian
                 </button>
             </div>
         </div>
@@ -134,17 +140,17 @@
     <!-- HALAMAN UJIAN UTAMA -->
     <div id="exam-interface" class="hidden h-screen flex flex-col">
         <!-- Header Status -->
-        <div class="h-[50px] bg-gray-900 text-white flex items-center justify-between px-4 shadow-md z-10">
+        <div class="h-[50px] bg-green-900 text-white flex items-center justify-between px-4 shadow-md z-10">
             <div class="flex items-center gap-2">
-                <i data-lucide="file-text" class="w-5 h-5 text-blue-400"></i>
+                <i data-lucide="file-text" class="w-5 h-5 text-green-300"></i>
                 <div class="flex flex-col leading-tight">
                     <span class="font-semibold text-sm md:text-base" id="active-subject-name">Ujian Berlangsung</span>
-                    <span class="text-[10px] text-gray-400" id="active-student-name">Siswa</span>
+                    <span class="text-[10px] text-green-200" id="active-student-name">Siswa</span>
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <div id="status-indicator" class="flex items-center gap-2 px-3 py-1 rounded bg-green-900/50 border border-green-700 text-green-400 text-xs md:text-sm transition-colors">
-                    <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                <div id="status-indicator" class="flex items-center gap-2 px-3 py-1 rounded bg-green-800 border border-green-600 text-green-300 text-xs md:text-sm transition-colors">
+                    <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
                     Status: Aman
                 </div>
                 <div class="font-mono text-sm" id="tolerance-display">Sisa Toleransi: 60dtk</div>
@@ -157,35 +163,38 @@
         </div>
     </div>
 
-    <!-- OVERLAY PERINGATAN (Muncul saat ganti tab) - TEMA BIRU -->
+    <!-- OVERLAY PERINGATAN (MERAH) -->
     <div id="warning-overlay" class="hidden fixed inset-0 z-50 warning-overlay flex flex-col items-center justify-center text-white p-8 text-center">
-        <i data-lucide="alert-circle" class="w-32 h-32 mb-6 text-blue-300"></i>
-        <h1 class="text-4xl font-bold mb-4">PERINGATAN AKTIVITAS!</h1>
-        <p class="text-xl mb-4 max-w-2xl">
-            Sistem mendeteksi Anda meninggalkan halaman ujian.<br>
-            Aktivitas ini dilaporkan sebagai tindakan multitasking/membuka aplikasi lain.
+        <i data-lucide="alert-triangle" class="w-32 h-32 mb-6 text-yellow-300"></i>
+        <h1 class="text-4xl font-bold mb-4">PERINGATAN PELANGGARAN!</h1>
+        <p class="text-xl mb-4 max-w-2xl font-bold">
+            SISTEM MENDETEKSI ANDA KELUAR APLIKASI<br>
+            Aktivitas ini dicatat sebagai tindakan kecurangan.
         </p>
+        <div class="bg-black/50 p-4 rounded-lg mb-4">
+             <p class="text-lg text-red-200">Total Pelanggaran: <span id="violation-count-display" class="font-bold text-white text-2xl">0</span> kali</p>
+        </div>
         <div class="text-4xl font-mono font-bold" id="overlay-tolerance-timer">
             60
         </div>
-        <p class="mt-4 text-sm text-blue-200">Kembali segera sebelum akses dikunci!</p>
+        <p class="mt-4 text-sm text-white/80">Segera kembali sebelum terkunci!</p>
     </div>
 
-    <!-- OVERLAY SUSPENSI (Hukuman 3 Menit) - TEMA BIRU -->
+    <!-- OVERLAY SUSPENSI -->
     <div id="suspension-overlay" class="hidden fixed inset-0 z-[60] blocked-overlay flex flex-col items-center justify-center text-white p-8 text-center">
-        <i data-lucide="lock" class="w-24 h-24 mb-6 text-blue-500"></i>
-        <h1 class="text-3xl font-bold mb-2 text-blue-500">PERANGKAT TERKUNCI</h1>
+        <i data-lucide="lock" class="w-24 h-24 mb-6 text-red-500"></i>
+        <h1 class="text-3xl font-bold mb-2 text-red-500">PERANGKAT TERKUNCI</h1>
         <p class="text-lg text-gray-300 mb-6 max-w-xl">
-            Akses Anda dimatikan sementara karena pelanggaran disiplin.<br>
+            Akses Anda dimatikan sementara karena pelanggaran berulang.<br>
             Keyboard dan kontrol browser dinonaktifkan.
         </p>
         
-        <div class="bg-gray-800 p-8 rounded-full border-4 border-blue-600 w-48 h-48 flex items-center justify-center mb-8 relative">
+        <div class="bg-gray-800 p-8 rounded-full border-4 border-red-600 w-48 h-48 flex items-center justify-center mb-8 relative">
             <div class="text-4xl font-mono font-bold text-white" id="suspension-timer">03:00</div>
             <span class="absolute -bottom-8 text-sm text-gray-400">Waktu Tunggu</span>
         </div>
 
-        <button id="btn-resume-exam" onclick="resumeExam()" disabled class="px-8 py-3 bg-gray-600 text-gray-400 font-bold rounded cursor-not-allowed transition hover:bg-blue-600 hover:text-white">
+        <button id="btn-resume-exam" onclick="resumeExam()" disabled class="px-8 py-3 bg-gray-600 text-gray-400 font-bold rounded cursor-not-allowed transition hover:bg-green-600 hover:text-white">
             LANJUTKAN UJIAN
         </button>
         <p id="resume-hint" class="mt-2 text-xs text-gray-500">Menunggu pembukaan kunci otomatis...</p>
@@ -195,7 +204,7 @@
         lucide.createIcons();
 
         // --- KONFIGURASI ADMIN ---
-        const ADMIN_PASSWORD = "cHemistry"; 
+        const ADMIN_PASSWORD = "#ujian";  // PASSWORD GURU
         const MAX_TOLERANCE = 10; 
         const SUSPENSION_TIME = 180; // 3 Menit
 
@@ -223,6 +232,7 @@
         let toleranceInterval = null;
         let suspensionInterval = null;
         let currentStudentName = "";
+        let violationCount = 0; // PENGHITUNG PELANGGARAN
 
         // --- DOM ELEMENTS ---
         const els = {
@@ -245,7 +255,8 @@
                 overlayTolerance: document.getElementById('overlay-tolerance-timer'),
                 suspension: document.getElementById('suspension-timer'),
                 subjectName: document.getElementById('active-subject-name'),
-                studentNameDisplay: document.getElementById('active-student-name')
+                studentNameDisplay: document.getElementById('active-student-name'),
+                violationCount: document.getElementById('violation-count-display')
             },
             btnResume: document.getElementById('btn-resume-exam'),
             resumeHint: document.getElementById('resume-hint')
@@ -260,29 +271,28 @@
         init();
 
         // --- SECURITY: KEYBOARD BLOCKER ---
-        // Memblokir tombol keyboard saat suspensi
         document.addEventListener('keydown', function(e) {
             if (isSuspended) {
                 e.preventDefault();
                 e.stopPropagation();
                 return false;
             }
-            
-            // Opsional: Memblokir inspect element / save page
             if ((e.ctrlKey && e.shiftKey && e.key === 'I') || (e.ctrlKey && e.key === 's') || e.key === 'F12') {
                 e.preventDefault();
             }
         }, true);
 
-        // --- LOGGER FUNCTION ---
+        // --- LOGGER FUNCTION (Diperbarui dengan Counter) ---
         function logActivity(action, details) {
             if (!loggerUrl) return; 
 
             const payload = {
+                timestamp: new Date().toLocaleString("id-ID"),
                 name: currentStudentName,
                 subject: els.displays.subjectName.textContent,
                 action: action,
-                details: details
+                details: details,
+                violation_count: violationCount // Kirim jumlah pelanggaran
             };
 
             fetch(loggerUrl, {
@@ -386,6 +396,7 @@
             if (!url) return alert("Silakan pilih mata pelajaran terlebih dahulu!");
 
             currentStudentName = student;
+            violationCount = 0; // Reset pelanggaran
             
             els.frame.src = url;
             els.displays.subjectName.textContent = name;
@@ -398,7 +409,7 @@
             currentTolerance = MAX_TOLERANCE;
             updateToleranceDisplay();
             
-            logActivity("START", "Memulai ujian"); 
+            logActivity("MULAI", "Siswa masuk ke dalam ujian"); 
 
             enterFullscreen();
         }
@@ -418,11 +429,15 @@
             if (!isExamActive || isSuspended) return;
 
             if (document.hidden) {
-                // User keluar
-                els.warning.classList.remove('hidden');
-                document.title = "⚠️ KEMBALI!";
+                // User keluar - Hitung sebagai pelanggaran
+                violationCount++;
+                els.displays.violationCount.textContent = violationCount;
                 
-                logActivity("WARNING", "Keluar tab / minimize"); 
+                els.warning.classList.remove('hidden');
+                document.title = "⚠️ PELANGGARAN TERDETEKSI!";
+                
+                // Log Pelanggaran dengan jumlahnya
+                logActivity("PELANGGARAN", `Keluar Aplikasi (Alt+Tab/Minimize). Pelanggaran ke-${violationCount}`); 
 
                 if (!toleranceInterval) {
                     toleranceInterval = setInterval(() => {
@@ -442,7 +457,6 @@
                 clearInterval(toleranceInterval);
                 toleranceInterval = null;
                 
-                // Pastikan kembali fullscreen
                 enterFullscreen();
             }
         });
@@ -457,18 +471,17 @@
             clearInterval(toleranceInterval);
             toleranceInterval = null;
             
-            logActivity("SUSPEND", "Terkena hukuman suspensi 3 menit"); 
+            logActivity("SUSPEND", `Terkena skorsing 3 menit. Total pelanggaran saat ini: ${violationCount}`); 
 
             els.warning.classList.add('hidden');
             els.suspension.classList.remove('hidden');
             els.frame.style.pointerEvents = 'none'; 
             
             els.btnResume.disabled = true;
-            els.btnResume.classList.remove('bg-blue-600', 'text-white', 'cursor-pointer');
+            els.btnResume.classList.remove('bg-green-600', 'text-white', 'cursor-pointer');
             els.btnResume.classList.add('bg-gray-600', 'text-gray-400', 'cursor-not-allowed');
             els.resumeHint.textContent = "Tombol akan aktif setelah waktu habis.";
             
-            // Paksa fullscreen ulang saat suspensi dimulai
             enterFullscreen();
 
             let penaltyTime = SUSPENSION_TIME;
@@ -478,12 +491,6 @@
                 penaltyTime--;
                 updateSuspensionDisplay(penaltyTime);
                 
-                // Cek terus apakah user keluar fullscreen, jika ya paksa lagi (walau browser membatasi ini)
-                if (!document.fullscreenElement) {
-                    // Kita tidak bisa auto-request fullscreen tanpa user interaction,
-                    // tapi kita bisa pastikan UI tetap tertutup overlay
-                }
-
                 if (penaltyTime <= 0) {
                     clearInterval(suspensionInterval);
                     enableResume();
@@ -500,7 +507,7 @@
         function enableResume() {
             els.btnResume.disabled = false;
             els.btnResume.classList.remove('bg-gray-600', 'text-gray-400', 'cursor-not-allowed');
-            els.btnResume.classList.add('bg-blue-600', 'text-white', 'cursor-pointer');
+            els.btnResume.classList.add('bg-green-600', 'text-white', 'cursor-pointer');
             els.btnResume.textContent = "LANJUTKAN UJIAN SEKARANG";
             els.resumeHint.textContent = "Waktu hukuman selesai. Silakan lanjut.";
         }
